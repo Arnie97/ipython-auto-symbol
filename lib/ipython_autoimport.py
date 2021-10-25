@@ -11,6 +11,7 @@ import builtins
 import functools
 import importlib
 import os
+import re
 import sys
 import token
 from types import ModuleType
@@ -34,6 +35,9 @@ try:
     __version__ = importlib_metadata.version("ipython-autoimport")
 except (AttributeError, ImportError):  # AttrError if i_m is missing.
     __version__ = "(unknown version)"
+
+
+SYMPY_SYMBOL_PATTERN = re.compile(r'.{,2}')
 
 
 def _get_import_cache(ipython):
@@ -178,7 +182,15 @@ class _AutoImporterMap(dict):
             try:
                 exec(import_source, self)  # exec recasts self as a dict.
             except Exception:  # Normally, ImportError.
-                raise key_error
+                try:
+                    assert SYMPY_SYMBOL_PATTERN.fullmatch(name)
+                    import sympy
+                except Exception:
+                    raise key_error
+                else:
+                    _report(self._ipython, "{0} = sympy.symbols('{0}')".format(name))
+                    self[name] = sympy.symbols(name)
+                    return self[name]
             else:
                 self._imported.append(import_source)
                 _report(self._ipython, import_source)
