@@ -26,5 +26,6 @@ setup(
     install_requires=[
         "ipython>=4.1",  # IPython#8985 is needed for tests to pass(?).
         "importlib_metadata; python_version<'3.8'",
+        "sympy",
     ],
 )

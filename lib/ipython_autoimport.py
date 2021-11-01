@@ -12,6 +12,7 @@ import functools
 import importlib
 import os
 import re
+import sympy
 import sys
 import token
 from types import ModuleType
@@ -182,15 +183,11 @@ class _AutoImporterMap(dict):
             try:
                 exec(import_source, self)  # exec recasts self as a dict.
             except Exception:  # Normally, ImportError.
-                try:
-                    assert SYMPY_SYMBOL_PATTERN.fullmatch(name)
-                    import sympy
-                except Exception:
-                    raise key_error
-                else:
+                if SYMPY_SYMBOL_PATTERN.fullmatch(name):
                     _report(self._ipython, "{0} = sympy.symbols('{0}')".format(name))
                     self[name] = sympy.symbols(name)
                     return self[name]
+                raise key_error
             else:
                 self._imported.append(import_source)
                 _report(self._ipython, import_source)
